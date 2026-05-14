@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/MultiSigWallet.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity >=0.8.0 <0.9.0;\n\ncontract MultiSigWallet {\n    struct Transaction {\n        address to;\n        uint256 value;\n        bytes data;\n        bool executed;\n        uint256 numConfirmations;\n    }\n\n    address[] public owners;\n    uint256 public threshold;\n\n    mapping(address => bool) public isOwner;\n    mapping(uint256 => mapping(address => bool)) public approved;\n\n    Transaction[] public transactions;\n\n    event Deposit(address indexed sender, uint256 amount);\n    event TransactionSubmitted(\n        uint256 indexed txIndex,\n        address indexed owner,\n        address indexed to,\n        uint256 value,\n        bytes data\n    );\n    event TransactionApproved(uint256 indexed txIndex, address indexed owner);\n    event ApprovalRevoked(uint256 indexed txIndex, address indexed owner);\n    event TransactionExecuted(uint256 indexed txIndex, address indexed owner);\n    event OwnerAdded(address indexed owner);\n    event OwnerRemoved(address indexed owner);\n    event ThresholdChanged(uint256 threshold);\n\n    modifier onlyOwner() {\n        require(isOwner[msg.sender], \"MultiSigWallet: caller is not an owner\");\n        _;\n    }\n\n    modifier txExists(uint256 txIndex) {\n        require(txIndex < transactions.length, \"MultiSigWallet: transaction does not exist\");\n        _;\n    }\n\n    modifier notExecuted(uint256 txIndex) {\n        require(!transactions[txIndex].executed, \"MultiSigWallet: transaction already executed\");\n        _;\n    }\n\n    modifier onlyWallet() {\n        require(msg.sender == address(this), \"MultiSigWallet: caller is not wallet\");\n        _;\n    }\n\n    constructor() {\n        owners.push(msg.sender);\n        isOwner[msg.sender] = true;\n        threshold = 1;\n    }\n\n    receive() external payable {\n        emit Deposit(msg.sender, msg.value);\n    }\n\n    function submitTransaction(address to, uint256 value, bytes calldata data) external onlyOwner {\n        require(to != address(0), \"MultiSigWallet: target is zero address\");\n\n        transactions.push(Transaction({ to: to, value: value, data: data, executed: false, numConfirmations: 0 }));\n\n        emit TransactionSubmitted(transactions.length - 1, msg.sender, to, value, data);\n    }\n\n    function approveTransaction(uint256 txIndex) external onlyOwner txExists(txIndex) notExecuted(txIndex) {\n        require(!approved[txIndex][msg.sender], \"MultiSigWallet: transaction already approved\");\n\n        approved[txIndex][msg.sender] = true;\n        transactions[txIndex].numConfirmations += 1;\n\n        emit TransactionApproved(txIndex, msg.sender);\n    }\n\n    function revokeApproval(uint256 txIndex) external onlyOwner txExists(txIndex) notExecuted(txIndex) {\n        require(approved[txIndex][msg.sender], \"MultiSigWallet: transaction not approved\");\n\n        approved[txIndex][msg.sender] = false;\n        transactions[txIndex].numConfirmations -= 1;\n\n        emit ApprovalRevoked(txIndex, msg.sender);\n    }\n\n    function executeTransaction(uint256 txIndex) external onlyOwner txExists(txIndex) notExecuted(txIndex) {\n        Transaction storage transaction = transactions[txIndex];\n        require(transaction.numConfirmations >= threshold, \"MultiSigWallet: insufficient approvals\");\n\n        transaction.executed = true;\n\n        (bool success, ) = transaction.to.call{ value: transaction.value }(transaction.data);\n        require(success, \"MultiSigWallet: transaction failed\");\n\n        emit TransactionExecuted(txIndex, msg.sender);\n    }\n\n    function addOwner(address newOwner) external onlyWallet {\n        require(newOwner != address(0), \"MultiSigWallet: owner is zero address\");\n        require(!isOwner[newOwner], \"MultiSigWallet: owner already exists\");\n\n        owners.push(newOwner);\n        isOwner[newOwner] = true;\n\n        emit OwnerAdded(newOwner);\n    }\n\n    function removeOwner(address owner) external onlyWallet {\n        require(isOwner[owner], \"MultiSigWallet: owner does not exist\");\n        require(owners.length - 1 >= threshold, \"MultiSigWallet: owner count below threshold\");\n\n        isOwner[owner] = false;\n\n        for (uint256 i = 0; i < owners.length; i++) {\n            if (owners[i] == owner) {\n                owners[i] = owners[owners.length - 1];\n                owners.pop();\n                break;\n            }\n        }\n\n        emit OwnerRemoved(owner);\n    }\n\n    function changeThreshold(uint256 newThreshold) external onlyWallet {\n        require(newThreshold > 0, \"MultiSigWallet: threshold is zero\");\n        require(newThreshold <= owners.length, \"MultiSigWallet: threshold exceeds owner count\");\n\n        threshold = newThreshold;\n\n        emit ThresholdChanged(newThreshold);\n    }\n\n    function getOwners() external view returns (address[] memory) {\n        return owners;\n    }\n\n    function getTransactionCount() external view returns (uint256) {\n        return transactions.length;\n    }\n\n    function getTransaction(uint256 txIndex) external view txExists(txIndex) returns (Transaction memory) {\n        return transactions[txIndex];\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

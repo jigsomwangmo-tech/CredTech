@@ -3,70 +3,61 @@
 import Link from "next/link";
 import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import { useCopyToClipboard } from "~~/hooks/scaffold-eth";
+import { TEAM_ACCENT, TEAM_MEMBERS, TEAM_NAME, TEAM_PROBLEM, TEAM_PROBLEM_EXPANDED } from "~~/utils/team";
 
 const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
-  const { targetNetwork } = useTargetNetwork();
+  const { copyToClipboard } = useCopyToClipboard();
 
   return (
-    <>
-      <div className="flex items-center flex-col grow pt-10">
-        <div className="px-5">
-          <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
-          </h1>
-          <div className="flex justify-center items-center space-x-2 flex-col">
-            <p className="my-2 font-medium">Connected Address:</p>
-            <Address address={connectedAddress} chain={targetNetwork} />
+    <main className="min-h-screen bg-base-100">
+      <section className="border-b border-base-300">
+        <div className="mx-auto flex min-h-[58vh] max-w-6xl flex-col justify-center px-6 py-16">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-wide" style={{ color: TEAM_ACCENT }}>
+            Bhutan Workshop Multisig
+          </p>
+          <h1 className="max-w-4xl text-5xl font-bold leading-tight md:text-7xl">{TEAM_NAME}</h1>
+          <p className="mt-6 max-w-3xl text-xl text-base-content/75 md:text-2xl">{TEAM_PROBLEM}</p>
+          <div className="mt-10">
+            <Link href="/wallet" className="btn text-white" style={{ backgroundColor: TEAM_ACCENT }}>
+              open the wallet
+            </Link>
           </div>
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-10 px-6 py-12 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <h2 className="text-2xl font-bold">Our team</h2>
+          <div className="mt-5 grid gap-3">
+            {TEAM_MEMBERS.map(member => (
+              <button
+                key={member.address}
+                className="flex items-center justify-between rounded-lg border border-base-300 bg-base-200 px-4 py-3 text-left transition hover:border-base-content/30"
+                onClick={() => copyToClipboard(member.address)}
+              >
+                <span>
+                  <span className="block font-semibold">
+                    {member.name}
+                    {member.deployer && <span className="badge badge-sm ml-2">deployer</span>}
+                  </span>
+                  <span className="mt-1 block text-sm text-base-content/70">
+                    <Address address={member.address} disableAddressLink size="sm" />
+                  </span>
+                </span>
+                <ClipboardDocumentIcon className="h-5 w-5 shrink-0 text-base-content/60" />
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col md:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
-                  Debug Contracts
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
-                  Block Explorer
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col justify-center">
+          <h2 className="text-2xl font-bold">Why this wallet exists</h2>
+          <p className="mt-4 text-lg leading-8 text-base-content/75">{TEAM_PROBLEM_EXPANDED}</p>
         </div>
-      </div>
-    </>
+      </section>
+    </main>
   );
 };
 
