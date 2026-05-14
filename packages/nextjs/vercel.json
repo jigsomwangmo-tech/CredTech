@@ -1,3 +1,4 @@
 {
-  "installCommand": "yarn install"
+  "installCommand": "corepack yarn install",
+  "buildCommand": "corepack yarn build"
 }
