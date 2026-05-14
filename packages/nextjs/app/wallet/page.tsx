@@ -16,7 +16,7 @@ import {
   useTargetNetwork,
 } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { TEAM_ACCENT, TEAM_MEMBERS, TEAM_NAME } from "~~/utils/team";
+import { TEAM_ACCENT, TEAM_ACCENT_DARK, TEAM_MEMBERS, TEAM_NAME, TEAM_SURFACE } from "~~/utils/team";
 
 type MultiSigTransaction = {
   to: Address;
@@ -74,25 +74,29 @@ const TransactionRow = ({
   if (!tx) return null;
 
   return (
-    <div className="rounded-lg border border-base-300 bg-base-100 p-4">
+    <div className="rounded-lg border border-stone-300 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <div className="text-sm font-semibold">Transaction #{index}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-base-content/70">
+          <div className="text-sm font-semibold text-stone-950">Transaction #{index}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-stone-600">
             <span>target</span>
             <AddressDisplay address={tx.to} chain={targetNetwork} size="sm" />
             {walletAddress && normalize(tx.to) === normalize(walletAddress) && (
-              <span className="badge badge-sm">self-call</span>
+              <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-medium text-stone-700">
+                self-call
+              </span>
             )}
           </div>
-          <div className="mt-1 text-sm text-base-content/70">value {formatEther(tx.value)} ETH</div>
+          <div className="mt-1 text-sm text-stone-600">value {formatEther(tx.value)} ETH</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="badge badge-lg">
+          <span className="rounded-full bg-teal-50 px-3 py-1 text-sm font-semibold text-teal-900">
             {approvals.toString()}/{threshold.toString()} approvals
           </span>
           {tx.executed ? (
-            <span className="badge badge-success">executed</span>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
+              executed
+            </span>
           ) : (
             <>
               <button className="btn btn-sm" disabled={isMining} onClick={() => run("approveTransaction")}>
@@ -102,7 +106,8 @@ const TransactionRow = ({
                 revoke
               </button>
               <button
-                className="btn btn-sm btn-primary"
+                className="btn btn-sm border-0 text-white"
+                style={{ backgroundColor: TEAM_ACCENT }}
                 disabled={!canExecute || isMining}
                 onClick={() => run("executeTransaction")}
               >
@@ -112,7 +117,7 @@ const TransactionRow = ({
           )}
         </div>
       </div>
-      {tx.data !== "0x" && <div className="mt-3 break-all rounded bg-base-200 p-2 text-xs">calldata {tx.data}</div>}
+      {tx.data !== "0x" && <div className="mt-3 break-all rounded bg-stone-100 p-2 text-xs">calldata {tx.data}</div>}
       {explorerTx && (
         <Link
           className="link mt-3 block text-sm"
@@ -222,26 +227,26 @@ const Wallet: NextPage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-base-200">
-      <header className="border-b border-base-300 bg-base-100">
+    <main className="min-h-screen" style={{ backgroundColor: TEAM_SURFACE }}>
+      <header className="border-b border-stone-300 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold" style={{ color: TEAM_ACCENT }}>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em]" style={{ color: TEAM_ACCENT_DARK }}>
               {TEAM_NAME} multisig
             </p>
-            <h1 className="text-3xl font-bold">Wallet dashboard</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-stone-950">Wallet dashboard</h1>
           </div>
-          <Link href="/" className="btn btn-sm btn-outline">
+          <Link href="/" className="btn btn-sm border-stone-400 bg-transparent text-stone-800 hover:border-stone-700">
             about
           </Link>
         </div>
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8">
-        <section className="rounded-lg border border-base-300 bg-base-100 p-5">
+        <section className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="text-left">
-              <div className="text-sm font-semibold text-base-content/60">Wallet address</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">Wallet address</div>
               <div className="mt-1 flex items-center gap-2">
                 {walletAddress ? (
                   <AddressDisplay address={walletAddress} chain={targetNetwork} />
@@ -263,36 +268,40 @@ const Wallet: NextPage = () => {
               disabled={!balance}
               onClick={() => balance && copyToClipboard(balance.formatted)}
             >
-              <div className="text-sm font-semibold text-base-content/60">ETH balance</div>
-              <div className="mt-1 text-xl font-bold">{balance ? `${balance.formatted} ETH` : "0 ETH"}</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">ETH balance</div>
+              <div className="mt-2 text-3xl font-semibold text-stone-950">
+                {balance ? `${Number(balance.formatted).toFixed(6)} ETH` : "0 ETH"}
+              </div>
             </button>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-lg border border-base-300 bg-base-100 p-5">
-            <h2 className="text-xl font-bold">Current owners</h2>
-            <div className="mt-2 text-base-content/70">
+          <div className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-stone-950">Current owners</h2>
+            <div className="mt-2 text-stone-600">
               {currentThreshold.toString()} of {ownerList.length} approvals required
             </div>
             <div className="mt-4 grid gap-3">
               {ownerList.map(owner => (
-                <div key={owner} className="rounded border border-base-300 p-3">
-                  <div className="font-semibold">{memberName(owner)}</div>
+                <div key={owner} className="rounded-md border border-stone-200 bg-white p-3">
+                  <div className="font-semibold text-stone-950">{memberName(owner)}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                     <AddressDisplay address={owner} chain={targetNetwork} size="sm" />
-                    {normalize(owner) === normalize(connectedAddress) && <span className="badge badge-sm">you</span>}
+                    {normalize(owner) === normalize(connectedAddress) && (
+                      <span className="rounded-full bg-teal-900 px-2 py-0.5 text-xs font-medium text-white">you</span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <form className="rounded-lg border border-base-300 bg-base-100 p-5" onSubmit={submitTransaction}>
-            <h2 className="text-xl font-bold">New transaction</h2>
+          <form className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm" onSubmit={submitTransaction}>
+            <h2 className="text-xl font-semibold text-stone-950">New transaction</h2>
             <div className="mt-4 grid gap-3">
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered w-full bg-white"
                 autoComplete="off"
                 placeholder="recipient address"
                 suppressHydrationWarning
@@ -300,7 +309,7 @@ const Wallet: NextPage = () => {
                 onChange={event => setRecipient(event.target.value)}
               />
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered w-full bg-white"
                 autoComplete="off"
                 placeholder="ETH value"
                 suppressHydrationWarning
@@ -308,13 +317,13 @@ const Wallet: NextPage = () => {
                 onChange={event => setEthValue(event.target.value)}
               />
               <textarea
-                className="textarea textarea-bordered min-h-24 w-full font-mono text-sm"
+                className="textarea textarea-bordered min-h-24 w-full bg-white font-mono text-sm"
                 placeholder="optional calldata, 0x..."
                 value={calldata}
                 onChange={event => setCalldata(event.target.value)}
               />
               <button
-                className="btn text-white"
+                className="btn border-0 text-white"
                 style={{ backgroundColor: TEAM_ACCENT }}
                 disabled={isMining}
                 suppressHydrationWarning
@@ -325,12 +334,15 @@ const Wallet: NextPage = () => {
           </form>
         </section>
 
-        <section className="rounded-lg border border-base-300 bg-base-100 p-5">
-          <h2 className="text-xl font-bold">Owner controls</h2>
+        <section className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-stone-950">Owner controls</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Ownership changes are submitted as wallet self-calls, so they follow the same approval flow.
+          </p>
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
             <div className="grid gap-2">
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered w-full bg-white"
                 autoComplete="off"
                 placeholder="new owner address"
                 suppressHydrationWarning
@@ -348,7 +360,7 @@ const Wallet: NextPage = () => {
             </div>
             <div className="grid gap-2">
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered w-full bg-white"
                 autoComplete="off"
                 placeholder="owner to remove"
                 suppressHydrationWarning
@@ -366,7 +378,7 @@ const Wallet: NextPage = () => {
             </div>
             <div className="grid gap-2">
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered w-full bg-white"
                 autoComplete="off"
                 placeholder="threshold"
                 suppressHydrationWarning
@@ -385,11 +397,13 @@ const Wallet: NextPage = () => {
           </div>
         </section>
 
-        <section className="rounded-lg border border-base-300 bg-base-100 p-5">
-          <h2 className="text-xl font-bold">Pending transactions</h2>
+        <section className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-stone-950">Pending transactions</h2>
           <div className="mt-4 grid gap-3">
             {indices.filter(index => !executedHashes[index.toString()]).length === 0 && (
-              <div className="text-base-content/60">No pending transactions.</div>
+              <div className="rounded-md border border-dashed border-stone-300 p-4 text-stone-500">
+                No pending transactions.
+              </div>
             )}
             {indices
               .filter(index => !executedHashes[index.toString()])
@@ -405,11 +419,13 @@ const Wallet: NextPage = () => {
           </div>
         </section>
 
-        <section className="rounded-lg border border-base-300 bg-base-100 p-5">
-          <h2 className="text-xl font-bold">Executed transactions</h2>
+        <section className="rounded-lg border border-stone-300 bg-white/80 p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-stone-950">Executed transactions</h2>
           <div className="mt-4 grid gap-3">
             {Object.entries(executedHashes).length === 0 && (
-              <div className="text-base-content/60">No executed transactions yet.</div>
+              <div className="rounded-md border border-dashed border-stone-300 p-4 text-stone-500">
+                No executed transactions yet.
+              </div>
             )}
             {Object.entries(executedHashes).map(([index, hash]) => (
               <Link

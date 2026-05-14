@@ -2,9 +2,11 @@ import { Address } from "viem";
 
 export const TEAM_NAME = "The 5th Node";
 
-export const TEAM_PROBLEM = "creating a multisig contract in scaffold-eth";
+export const TEAM_PROBLEM = "Creating a shared treasury workflow with a 3-of-5 multisig on Sepolia.";
 
-export const TEAM_ACCENT = "#d97706";
+export const TEAM_ACCENT = "#0f766e";
+export const TEAM_ACCENT_DARK = "#134e4a";
+export const TEAM_SURFACE = "#f5f1e8";
 
 export const TEAM_MEMBERS: { name: string; address: Address; deployer?: boolean }[] = [
   {
@@ -31,4 +33,4 @@ export const TEAM_MEMBERS: { name: string; address: Address; deployer?: boolean 
 ];
 
 export const TEAM_PROBLEM_EXPANDED =
-  "The 5th Node is using Scaffold-ETH to make shared wallet control concrete and visible. The app turns multisig coordination into a simple workshop flow: propose an action, gather approvals, and execute only when the agreed threshold is met.";
+  "The 5th Node is using Scaffold-ETH to make shared wallet control concrete and visible. The app turns multisig coordination into a practical team workflow: propose an action, gather approvals, and execute only when the agreed threshold is met.";
