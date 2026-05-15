@@ -1,91 +1,107 @@
-# 🏗 Scaffold-ETH 2
+# NDI Credential Chain
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+A full-stack hackathon scaffold for decentralized credential issuance, verification, and recruitment with Bhutan NDI as the central identity, authorization, consent, and trust layer.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+Repository target: `https://github.com/jigsomwangmo-tech/CredTech.git`
 
-> [!NOTE]
-> 🤖 Scaffold-ETH 2 is AI-ready! It has everything agents need to build on Ethereum. Check `.agents/`, `.claude/`, `.opencode` or `.cursor/` for more info.
+## Stack
 
-⚙️ Built using NextJS, RainbowKit, Foundry/Hardhat, Wagmi, Viem, and Typescript.
+- Frontend: Next.js App Router, TypeScript, TailwindCSS, shadcn-style UI primitives
+- API: Express.js, TypeScript, Bun
+- Blockchain: Solidity `^0.8.x`, viem
+- Database: PostgreSQL, Drizzle ORM
+- Infrastructure: Docker and Docker Compose
+- Authentication: mock Bhutan NDI SDK integration layer
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+## Structure
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
-
-## Requirements
-
-Before you begin, you need to install the following tools:
-
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
-
-## Quickstart
-
-To get started with Scaffold-ETH 2, follow the steps below:
-
-1. Install the latest version of Scaffold-ETH 2
-
-```
-npx create-eth@latest
+```txt
+apps/
+  api/          Express API with NDI, credentials, resume, jobs, employer modules
+  web/          Next.js frontend
+packages/
+  contracts/    CredentialRegistry.sol and viem deployment script
+  db/           Drizzle schema and database client
+  shared/       Shared TypeScript types
+docker/         Anvil Dockerfile
 ```
 
-This command will install all the necessary packages and dependencies, so it might take a while.
+## NDI Rules
 
-> [!NOTE]
-> You can also initialize your project with one of our extensions to add specific features or starter-kits. Learn more in our [extensions documentation](https://docs.scaffoldeth.io/extensions/).
+- Without NDI login, no user exists in the system.
+- Without NDI DID hash, no blockchain action is valid.
+- Without NDI consent, no holder credential or resume data is shared.
+- Raw DIDs are never stored on-chain; the system uses `keccak256(abi.encodePacked(did))` style DID hashes.
 
-2. Run a local network in the first terminal:
+## Setup
 
-```
-yarn chain
-```
-
-This command starts a local Ethereum network that runs on your local machine and can be used for testing and development. Learn how to [customize your network configuration](https://docs.scaffoldeth.io/quick-start/environment#1-initialize-a-local-blockchain).
-
-3. On a second terminal, deploy the test contract:
-
-```
-yarn deploy
+```bash
+bun install
+cp .env.example .env
+docker compose up
 ```
 
-This command deploys a test smart contract to the local network. You can find more information about how to customize your contract and deployment script in our [documentation](https://docs.scaffoldeth.io/quick-start/environment#2-deploy-your-smart-contract).
+In another terminal, push the database schema:
 
-4. On a third terminal, start your NextJS app:
-
-```
-yarn start
+```bash
+bun --filter @ndi/db push
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+Compile and deploy the contract when Foundry is available:
 
-**What's next**:
+```bash
+cd packages/contracts
+forge build
+bun run deploy
+```
 
-Visit the [What's next section of our docs](https://docs.scaffoldeth.io/quick-start/environment#whats-next) to learn how to:
+Set `CREDENTIAL_REGISTRY_ADDRESS` in `.env` and Docker Compose after deployment.
 
-- Edit your smart contracts
-- Edit your deployment scripts
-- Customize your frontend
-- Edit the app config
-- Writing and running tests
-- [Setting up external services and API keys](https://docs.scaffoldeth.io/deploying/deploy-smart-contracts#configuration-of-third-party-services-for-production-grade-apps)
+## Scripts
 
-## Documentation
+```bash
+bun dev
+bun test
+bun lint
+bun migrate
+bun contracts:deploy
+```
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn all the technical details and guides of Scaffold-ETH 2.
+## API Modules
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+- `POST /auth/ndi-login`
+- `POST /auth/verify-consent`
+- `POST /issuers/register`
+- `GET /issuers`
+- `POST /credentials/issue`
+- `POST /credentials/verify`
+- `POST /credentials/revoke`
+- `GET /credentials/:id`
+- `POST /resume/create`
+- `PATCH /resume/update`
+- `POST /resume/request-consent`
+- `GET /resume/:holderId`
+- `POST /resume/gpa`
+- `POST /jobs/create`
+- `GET /jobs`
+- `PATCH /jobs/:id`
+- `DELETE /jobs/:id`
+- `POST /jobs/:id/apply`
+- `GET /jobs/:id/applicants`
+- `POST /employers/request-verification`
+- `POST /employers/verify-candidate`
 
-## Contributing to Scaffold-ETH 2
+## Frontend Pages
 
-We welcome contributions to Scaffold-ETH 2!
+- `/` landing page
+- `/verify` certificate verifier
+- `/verify/[credentialId]` QR verification target
+- `/jobs` job listings
+- `/login` mock NDI login
+- `/issuer` issuer dashboard
+- `/holder` holder dashboard
+- `/employer` employer dashboard
 
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+## Notes
+
+The NDI integration is intentionally isolated in `apps/api/src/modules/ndi` and re-exported from `apps/api/src/services/ndiService.ts`, so a real Bhutan NDI SDK can replace the mock without changing the rest of the app.
