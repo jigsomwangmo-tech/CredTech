@@ -33,10 +33,12 @@ getUserDID()
 ## Login Flow
 
 1. User clicks "Login with NDI".
-2. Backend redirects or starts an NDI authentication request.
-3. NDI returns user DID, verification status, and session proof token.
-4. Backend validates the token.
-5. Backend issues a JWT session.
+2. Backend authenticates to `https://staging.bhutanndi.com/authentication/v1/authenticate` using OAuth2 `client_credentials`.
+3. Backend creates a verifier proof request at `https://demo-client.bhutanndi.com/verifier/v1/proof-request`.
+4. Frontend renders `proofRequestURL` as a QR code and `deepLinkURL` as the mobile wallet link.
+5. NDI returns the proof result asynchronously over webhook or NATS.
+6. Backend accepts only `verification_result === "ProofValidated"`.
+7. Backend hashes `holder_did` and issues a JWT session.
 
 ## DID Hashing
 
@@ -51,10 +53,10 @@ Store `holderDIDHash` and, where useful, `issuerDIDHash`.
 ## Consent Flow
 
 1. Employer requests education verification, employment history, or certificate access.
-2. System sends an NDI consent request to the holder.
-3. Holder approves in the NDI app.
-4. NDI returns a signed consent proof.
-5. Backend verifies the consent proof before sharing any data.
+2. System creates a Bhutan NDI verifier proof request with schema restrictions.
+3. Holder approves in the NDI wallet.
+4. NDI returns a proof envelope by webhook or NATS.
+5. Backend normalizes `data.requested_presentation.revealed_attrs`, verifies `ProofValidated`, and only then shares selected data.
 
 If no consent exists, return:
 
@@ -86,3 +88,12 @@ Only NDI-approved issuers with linked DID hashes can issue credentials. Reject u
 4. Owner registers the issuer wallet and DID hash on-chain.
 
 NDI is the identity layer, authorization layer, consent layer, and issuer trust anchor.
+
+## NDI Transport Notes
+
+- Auth lives on `staging.bhutanndi.com`; verifier, issuer, and webhook APIs live on `demo-client.bhutanndi.com`.
+- `proofAttributes[].name` is case-sensitive.
+- Always include `restrictions[].schema_name` to prevent self-attested data from satisfying the proof.
+- `purpose` must be `login`, `ekyc`, or `ekyc_update`.
+- Revealed attributes can arrive as arrays or objects; normalize both.
+- Do not poll for revealed attributes. Polling can show status, but attributes arrive by webhook or NATS.

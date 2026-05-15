@@ -33,6 +33,26 @@ docker/         Anvil Dockerfile
 - Without NDI consent, no holder credential or resume data is shared.
 - Raw DIDs are never stored on-chain; the system uses `keccak256(abi.encodePacked(did))` style DID hashes.
 
+## Bhutan NDI Integration
+
+The API follows the staging NDI host split:
+
+- OAuth token: `https://staging.bhutanndi.com/authentication/v1/authenticate`
+- Verifier, issuer, and webhook APIs: `https://demo-client.bhutanndi.com`
+
+Set `NDI_CLIENT_ID` and `NDI_CLIENT_SECRET` to enable real calls. Without them, the API returns mock proof URLs so the rest of the app can still run.
+
+Implemented NDI pieces:
+
+- OAuth2 `client_credentials` token cache with 5-minute early refresh.
+- `POST /auth/ndi-login/start` creates a login proof request for `Full Name` and `ID Number`.
+- `POST /auth/ndi-login/complete` accepts a validated proof payload and issues the app JWT.
+- `POST /ndi/oauth/token` and `POST /ndi/webhook` support NDI webhook delivery.
+- `POST /ndi/webhook/register` registers the webhook when public URLs are configured.
+- Consent requests create verifier proof requests and subscribe the thread ID for webhook callbacks.
+
+NDI proof payloads are normalized from the shared envelope shape. The app trusts `verification_result === "ProofValidated"` and reads revealed attributes defensively whether NDI returns an object or array.
+
 ## Setup
 
 ```bash
@@ -70,7 +90,13 @@ bun contracts:deploy
 ## API Modules
 
 - `POST /auth/ndi-login`
+- `POST /auth/ndi-login/start`
+- `POST /auth/ndi-login/complete`
 - `POST /auth/verify-consent`
+- `POST /ndi/oauth/token`
+- `POST /ndi/webhook`
+- `POST /ndi/webhook/register`
+- `POST /ndi/webhook/subscribe`
 - `POST /issuers/register`
 - `GET /issuers`
 - `POST /credentials/issue`

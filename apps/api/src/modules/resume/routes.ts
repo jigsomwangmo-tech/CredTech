@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, consentRequests, holders, resumes } from "@ndi/db";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import { asyncHandler } from "../../lib/asyncHandler";
-import { requestConsent } from "../ndi/ndiService";
+import { requestConsent, subscribeWebhook } from "../ndi/ndiService";
 import { australiaGradeToGpa, bhutanPercentageToGpa, indiaGradeToGpa, usGradeToGpa } from "./gpa";
 
 export const resumeRouter = Router();
@@ -39,6 +39,7 @@ resumeRouter.post(
       scopes: req.body.scopes,
       selectiveDisclosure: req.body.selectiveDisclosure ?? { allowedFields: [], hiddenFields: [] },
     });
+    await subscribeWebhook(ndi.proofRequestThreadId);
     const [request] = await db
       .insert(consentRequests)
       .values({

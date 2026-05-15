@@ -4,7 +4,7 @@ import { db, consentRequests } from "@ndi/db";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import { asyncHandler } from "../../lib/asyncHandler";
 import { verifyCredentialOnchain } from "../../services/contractService";
-import { requestConsent, verifyConsentProof } from "../ndi/ndiService";
+import { requestConsent, subscribeWebhook, verifyConsentProof } from "../ndi/ndiService";
 
 export const employerRouter = Router();
 
@@ -19,6 +19,7 @@ employerRouter.post(
       scopes: req.body.scopes ?? ["education", "employment", "certificate"],
       selectiveDisclosure: req.body.selectiveDisclosure ?? { allowedFields: [], hiddenFields: [] },
     });
+    await subscribeWebhook(ndi.proofRequestThreadId);
     const [request] = await db
       .insert(consentRequests)
       .values({
