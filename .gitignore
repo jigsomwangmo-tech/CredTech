@@ -23,3 +23,7 @@ node_modules
 # cli
 dist
 .vercel
+
+# foundry
+packages/contracts/out
+packages/contracts/cache
