@@ -22,6 +22,7 @@ type ApplicationResult = {
       applicantName?: string;
       applicantEmail?: string;
       result?: string;
+      ndiProfile?: Record<string, string>;
       documents?: Record<string, { fileName: string; sha256: string }>;
     };
   };
@@ -194,6 +195,16 @@ export default function JobsPage() {
                       <span className="rounded-md bg-muted px-2 py-1 text-xs">{applicant.status}</span>
                     </div>
                     <p className="mt-2 text-sm opacity-75">{applicant.verificationSummary.result}</p>
+                    {applicant.verificationSummary.ndiProfile && (
+                      <div className="mt-3 grid gap-2 rounded-md bg-muted p-3 text-xs md:grid-cols-2">
+                        {Object.entries(applicant.verificationSummary.ndiProfile).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="opacity-60">{key}: </span>
+                            <span className="font-medium">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

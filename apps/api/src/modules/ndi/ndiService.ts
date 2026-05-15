@@ -46,6 +46,17 @@ const authBaseUrl = process.env.NDI_AUTH_BASE_URL ?? "https://staging.bhutanndi.
 const apiBaseUrl = process.env.NDI_API_BASE_URL ?? "https://demo-client.bhutanndi.com";
 const defaultSchemaName = process.env.NDI_DEFAULT_SCHEMA_NAME ?? "https://dev-schema.ngotag.com/schemas/foundational-id";
 
+export const mockNDIProfile = {
+  "Full Name": "Dorji Sonam",
+  Gender: "Male",
+  Bhutanese: "Yes",
+  "Date of Birth": "19/07/1995",
+  "ID Type": "National ID Card",
+  "ID Number": "1234",
+  Dzongkhag: "Trongsa",
+  Gewog: "Tangsibjee",
+} as const;
+
 function ndiConfigured() {
   return Boolean(process.env.NDI_CLIENT_ID && process.env.NDI_CLIENT_SECRET);
 }
@@ -118,6 +129,31 @@ export function normalizeNDIEvent(payload: unknown): NormalizedNDIProof {
         .filter((entry): entry is [string, string] => typeof entry[1] === "string"),
     ),
     raw: payload,
+  };
+}
+
+export function createMockProofPayload(threadId: string) {
+  return {
+    pattern: threadId,
+    data: {
+      type: "present-proof/presentation-result",
+      verification_result: "ProofValidated",
+      requested_presentation: {
+        revealed_attrs: Object.fromEntries(
+          Object.entries(mockNDIProfile).map(([name, value], identifierIndex) => [
+            name,
+            [{ value, identifier_index: identifierIndex }],
+          ]),
+        ),
+        unrevealed_attrs: {},
+        predicates: {},
+        self_attested_attrs: {},
+        identifiers: [{ schema_id: defaultSchemaName, cred_def_id: null }],
+      },
+      relationship_did: "mock-relationship-dorji-sonam",
+      thid: threadId,
+      holder_did: "did:key:mock-dorji-sonam",
+    },
   };
 }
 
@@ -227,6 +263,10 @@ export async function verifyConsentProof(proof: string) {
   } catch {
     return false;
   }
+}
+
+export function getMockNDIProfile() {
+  return mockNDIProfile;
 }
 
 export async function getUserDID(proofToken: string) {

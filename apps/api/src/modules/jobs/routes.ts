@@ -7,7 +7,7 @@ import { db, holders, jobApplications, jobs, users } from "@ndi/db";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import { asyncHandler } from "../../lib/asyncHandler";
 import { hashDID, sha256Buffer } from "../../lib/hash";
-import { createProofRequest, subscribeWebhook, verifyConsentProof } from "../ndi/ndiService";
+import { createMockProofPayload, createProofRequest, getMockNDIProfile, subscribeWebhook, verifyConsentProof } from "../ndi/ndiService";
 
 export const jobsRouter = Router();
 
@@ -114,9 +114,10 @@ jobsRouter.post(
       return res.status(400).json({ code: "INVALID_REQUEST", message: "CV and certificate PDFs are required" });
     }
 
-    const applicantName = String(req.body.applicantName ?? "NDI Demo Applicant");
+    const mockProfile = getMockNDIProfile();
+    const applicantName = String(req.body.applicantName || mockProfile["Full Name"]);
     const applicantEmail = req.body.applicantEmail ? String(req.body.applicantEmail) : undefined;
-    const holderDid = `did:bt:demo:${applicantEmail ?? applicantName}`;
+    const holderDid = "did:key:mock-dorji-sonam";
     const holderDidHash = hashDID(holderDid);
 
     const [existingUser] = await db.select().from(users).where(eq(users.didHash, holderDidHash));
@@ -159,6 +160,7 @@ jobsRouter.post(
           applicantName,
           applicantEmail,
           holderDidHash,
+          ndiProfile: mockProfile,
           documents: {
             cv: { fileName: cv.originalname, sha256: cvHash },
             certificate: { fileName: certificate.originalname, sha256: certificateHash },
@@ -181,7 +183,15 @@ jobsRouter.post(
 jobsRouter.post(
   "/applications/:applicationId/ndi-approve-demo",
   asyncHandler(async (req, res) => {
-    const consentProof = String(req.body.consentProof ?? "ndi-consent-approved:demo");
+    const [existing] = await db.select().from(jobApplications).where(eq(jobApplications.id, req.params.applicationId));
+    const previousSummary =
+      existing && typeof existing.verificationSummary === "object" && existing.verificationSummary
+        ? (existing.verificationSummary as Record<string, unknown>)
+        : {};
+    const previousNdi = (previousSummary.ndi as Record<string, unknown> | undefined) ?? {};
+    const threadId = String(previousNdi.proofRequestThreadId ?? "mock-thread");
+    const consentProof =
+      typeof req.body.consentProof === "string" ? req.body.consentProof : JSON.stringify(createMockProofPayload(threadId));
     const approved = await verifyConsentProof(consentProof);
 
     if (!approved) {
@@ -191,12 +201,6 @@ jobsRouter.post(
       });
     }
 
-    const [existing] = await db.select().from(jobApplications).where(eq(jobApplications.id, req.params.applicationId));
-    const previousSummary =
-      existing && typeof existing.verificationSummary === "object" && existing.verificationSummary
-        ? (existing.verificationSummary as Record<string, unknown>)
-        : {};
-
     const [application] = await db
       .update(jobApplications)
       .set({
@@ -205,11 +209,12 @@ jobsRouter.post(
         verificationSummary: {
           ...previousSummary,
           consentProof,
+          ndiProfile: getMockNDIProfile(),
           ndi: {
-            ...((previousSummary.ndi as Record<string, unknown> | undefined) ?? {}),
+            ...previousNdi,
             consentStatus: "approved",
           },
-          result: "NDI consent approved. CV and certificate hashes recorded for employer verification.",
+          result: "NDI consent approved for Dorji Sonam. CV and certificate hashes recorded for employer verification.",
         },
       })
       .where(eq(jobApplications.id, req.params.applicationId))
